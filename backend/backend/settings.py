@@ -3,10 +3,14 @@
 import os
 import sys
 from pathlib import Path
+import environ
 
 from django.core.management.utils import get_random_secret_key
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+env = environ.Env()
+env.read_env(os.path.join(BASE_DIR, '.env'))
 
 
 def env_bool(name: str, default: bool) -> bool:
