@@ -12,9 +12,9 @@ An intelligent, full-stack AIOps platform that unifies real-time asynchronous ne
 
 ---
 
-## Academic Project & IEEE Report
+## Academic Project & Report
 
-* **Institution:** Department of Computer Engineering, Fr. Concei\c{c}\~ao Rodrigues College of Engineering (CRCE), Mumbai, India
+* **Institution:** Department of Computer Engineering, Fr. Conceicao Rodrigues College of Engineering (CRCE), Mumbai, India
 * **Team Members:**
   * Jeet Chavan (10584)
   * Zeon Dsouza (10598)
