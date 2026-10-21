@@ -4,3 +4,4 @@ __pycache__/
 celerybeat*
 db.sqlite3
 staticfiles/
+.DS_Store
