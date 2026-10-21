@@ -21,6 +21,20 @@ from .snmp import collect_snmp_metrics, get_supported_metrics
 class DeviceMonitoringSnapshotView(APIView):
     permission_classes = [IsAdminUser]
 
+    DEFAULT_HISTORY_LIMIT = 50
+    MAX_HISTORY_LIMIT = 500
+
+    def history_limit(self, request):
+        """Chart-friendly history depth, capped so the payload stays bounded."""
+        value = request.query_params.get('history')
+        if value is None:
+            return self.DEFAULT_HISTORY_LIMIT
+        try:
+            requested = int(value)
+        except (TypeError, ValueError):
+            return self.DEFAULT_HISTORY_LIMIT
+        return max(1, min(self.MAX_HISTORY_LIMIT, requested))
+
     def get(self, request, pk):
         device = get_object_or_404(
             Device.objects.select_related('monitoring_configuration'),
@@ -28,7 +42,7 @@ class DeviceMonitoringSnapshotView(APIView):
         )
         configuration = device.monitoring_configuration
         latest = device.monitoring_records.first()
-        history = device.monitoring_records.all()[:50]
+        history = device.monitoring_records.all()[:self.history_limit(request)]
         snmp_metrics = device.snmp_metrics.order_by('-timestamp')
 
         latest_by_metric = {}

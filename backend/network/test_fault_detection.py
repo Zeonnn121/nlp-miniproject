@@ -101,7 +101,7 @@ class FaultDetectionTests(TestCase):
         self.assertEqual(fault.status, FaultEvent.Status.RESOLVED)
         self.assertIsNotNone(fault.resolved_at)
 
-    @patch('network.monitoring.ping_ipv4')
+    @patch('network.monitoring.services.ping_ipv4')
     def test_monitoring_run_triggers_fault_detection(self, ping):
         ping.return_value = PingResult(False, None, 100.0, 'unreachable')
 

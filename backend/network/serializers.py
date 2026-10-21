@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework import serializers
 
+from .httpcheck import InvalidHTTPConfiguration, validate_endpoint_url
 from .models import Device, FaultEvent, MonitoringConfiguration, MonitoringRecord, Notification, SNMPMetric
 
 
@@ -45,12 +46,24 @@ class MonitoringConfigurationSerializer(serializers.ModelSerializer):
     availableMetrics = serializers.ListField(
         source='available_metrics', child=serializers.CharField(), required=False
     )
+    httpMonitoringEnabled = serializers.BooleanField(source='http_monitoring_enabled', required=False)
+    httpUrl = serializers.URLField(
+        source='http_url', required=False, allow_blank=True, max_length=500
+    )
+    httpTimeoutSeconds = serializers.FloatField(
+        source='http_timeout_seconds', required=False, min_value=0.1, max_value=30
+    )
+    httpExpectedStatus = serializers.IntegerField(
+        source='http_expected_status', required=False, min_value=100, max_value=599,
+        allow_null=True,
+    )
 
     class Meta:
         model = MonitoringConfiguration
         fields = [
             'enabled', 'intervalSeconds', 'snmpEnabled', 'snmpVersion', 'snmpCommunity',
             'snmpPort', 'snmpTimeoutSeconds', 'availableMetrics',
+            'httpMonitoringEnabled', 'httpUrl', 'httpTimeoutSeconds', 'httpExpectedStatus',
         ]
 
     def validate_intervalSeconds(self, value):
@@ -58,15 +71,41 @@ class MonitoringConfigurationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Monitoring interval must be at least 5 seconds.')
         return value
 
+    def validate_httpUrl(self, value):
+        if not value:
+            return value
+        try:
+            return validate_endpoint_url(value)
+        except InvalidHTTPConfiguration as exc:
+            raise serializers.ValidationError(str(exc))
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        # Enabling HTTP monitoring without a usable URL would fail every run.
+        if 'http_monitoring_enabled' in attrs and attrs['http_monitoring_enabled']:
+            url = attrs.get('http_url', self.instance.http_url if self.instance else '')
+            if not (url or '').strip():
+                raise serializers.ValidationError(
+                    {'httpUrl': 'An HTTP endpoint URL is required when HTTP monitoring is enabled.'}
+                )
+        return attrs
+
 
 class MonitoringRecordSerializer(serializers.ModelSerializer):
     deviceId = serializers.UUIDField(source='device_id', read_only=True)
     latencyMs = serializers.FloatField(source='latency_ms', allow_null=True)
     packetLossPercent = serializers.FloatField(source='packet_loss_percent', allow_null=True)
+    httpOk = serializers.BooleanField(source='http_ok', allow_null=True)
+    httpStatusCode = serializers.IntegerField(source='http_status_code', allow_null=True)
+    httpResponseTimeMs = serializers.FloatField(source='http_response_time_ms', allow_null=True)
+    httpError = serializers.CharField(source='http_error', allow_blank=True)
 
     class Meta:
         model = MonitoringRecord
-        fields = ['id', 'deviceId', 'timestamp', 'reachable', 'latencyMs', 'packetLossPercent']
+        fields = [
+            'id', 'deviceId', 'timestamp', 'reachable', 'latencyMs', 'packetLossPercent',
+            'httpOk', 'httpStatusCode', 'httpResponseTimeMs', 'httpError',
+        ]
         read_only_fields = ['id', 'deviceId']
 
 

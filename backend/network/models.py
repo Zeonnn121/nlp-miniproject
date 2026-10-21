@@ -49,6 +49,11 @@ class MonitoringConfiguration(models.Model):
     snmp_port = models.PositiveIntegerField(default=161)
     snmp_timeout_seconds = models.FloatField(default=2.0)
     available_metrics = models.JSONField(default=list, blank=True)
+    http_monitoring_enabled = models.BooleanField(default=False)
+    http_url = models.URLField(max_length=500, blank=True, default='')
+    http_timeout_seconds = models.FloatField(default=5.0)
+    # Blank means "accept any 2xx/3xx response"; a value demands an exact match.
+    http_expected_status = models.PositiveIntegerField(blank=True, null=True)
 
     def __str__(self):
         return f'Monitoring configuration for {self.device.name}'
@@ -61,6 +66,11 @@ class MonitoringRecord(models.Model):
     reachable = models.BooleanField(null=True)
     latency_ms = models.FloatField(null=True, blank=True)
     packet_loss_percent = models.FloatField(null=True, blank=True)
+    # HTTP probe fields stay null when the device has no endpoint configured.
+    http_ok = models.BooleanField(null=True, blank=True)
+    http_status_code = models.PositiveIntegerField(null=True, blank=True)
+    http_response_time_ms = models.FloatField(null=True, blank=True)
+    http_error = models.CharField(max_length=255, blank=True, default='')
 
     class Meta:
         ordering = ['-timestamp']
@@ -97,6 +107,8 @@ class FaultEvent(models.Model):
         HIGH_MEMORY_USAGE = 'HIGH_MEMORY_USAGE', 'High memory usage'
         INTERFACE_FAILURE = 'INTERFACE_FAILURE', 'Interface failure'
         CONNECTIVITY_FAILURE = 'CONNECTIVITY_FAILURE', 'Connectivity failure'
+        HTTP_ENDPOINT_FAILURE = 'HTTP_ENDPOINT_FAILURE', 'HTTP endpoint failure'
+        HTTP_SLOW_RESPONSE = 'HTTP_SLOW_RESPONSE', 'HTTP slow response'
 
     class Severity(models.TextChoices):
         CRITICAL = 'critical', 'Critical'

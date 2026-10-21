@@ -96,6 +96,10 @@ Each monitoring execution creates a new immutable historical `MonitoringRecord`.
 | `reachable` | ICMP reachability |
 | `latencyMs` | Response latency, when available |
 | `packetLossPercent` | Packet-loss result, when available |
+| `httpOk` | HTTP probe result, or `null` when no endpoint is configured |
+| `httpStatusCode` | HTTP status code, or `null` if the request never completed |
+| `httpResponseTimeMs` | HTTP response time, when measured |
+| `httpError` | HTTP failure reason, empty on success |
 
 ## ICMP monitoring
 
@@ -116,9 +120,26 @@ Example successful response:
   "timestamp": "2026-09-15T06:30:00Z",
   "reachable": true,
   "latencyMs": 4.32,
-  "packetLossPercent": 0.0
+  "packetLossPercent": 0.0,
+  "httpOk": null,
+  "httpStatusCode": null,
+  "httpResponseTimeMs": null,
+  "httpError": ""
 }
 ```
+
+`httpOk` is `null` here because no HTTP endpoint is configured for the device.
+
+## Monitoring snapshot
+
+```http
+GET /api/devices/<id>/monitoring-snapshot/
+GET /api/devices/<id>/monitoring-snapshot/?history=<1-500>
+```
+
+Returns the device, latest record, up to `history` records (default 50, capped at 500), SNMP
+metrics, and the monitoring configuration. The history array feeds the device detail trend charts;
+records are returned newest first.
 
 ## Monitoring records
 
@@ -152,8 +173,48 @@ A device has one `MonitoringConfiguration` containing:
 - SNMP port
 - SNMP timeout
 - selected metrics
+- HTTP endpoint monitoring enablement
+- HTTP endpoint URL
+- HTTP request timeout
+- optional exact expected HTTP status
 
 The SNMP community is stored server-side and is not returned by the configuration API.
+
+HTTP monitoring settings are read and written through the existing monitoring configuration endpoint:
+
+```http
+GET   /api/devices/<id>/monitoring-config/
+PATCH /api/devices/<id>/monitoring-config/
+```
+
+```json
+{
+  "httpMonitoringEnabled": true,
+  "httpUrl": "https://example.com/health",
+  "httpTimeoutSeconds": 3.0,
+  "httpExpectedStatus": null
+}
+```
+
+Enabling HTTP monitoring without a URL, or supplying a non-`http(s)` URL, returns `400`.
+`httpExpectedStatus` accepts `100`–`599`; leave it unset to accept any `2xx`/`3xx` response.
+
+## HTTP endpoint monitoring
+
+When an endpoint is configured, every monitoring run probes it alongside ICMP and records the
+result on the same `MonitoringRecord`:
+
+- `httpOk` — whether the endpoint returned an acceptable response
+- `httpStatusCode` — the status code, or `null` if the request never completed
+- `httpResponseTimeMs` — measured response time
+- `httpError` — the failure reason, empty on success
+
+These fields stay `null` when no endpoint is configured, which distinguishes "not probed" from
+"probed and failed". ICMP and HTTP are evaluated independently: a host can be unreachable by ping
+while its endpoint is healthy, and vice versa.
+
+Probe failures raise `HTTP_ENDPOINT_FAILURE`; a healthy but slow endpoint raises
+`HTTP_SLOW_RESPONSE`. Both follow the normal active → acknowledged → resolved lifecycle.
 
 ## SNMP
 

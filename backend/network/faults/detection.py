@@ -23,6 +23,8 @@ class FaultThresholds:
     cpu_critical_percent: float = 90.0
     memory_high_percent: float = 80.0
     memory_critical_percent: float = 90.0
+    http_response_medium_ms: float = 1000.0
+    http_response_high_ms: float = 3000.0
 
 
 DEFAULT_THRESHOLDS = FaultThresholds()
@@ -88,15 +90,57 @@ def _resolve_fault(device: Device, fault_type: str) -> int:
     )
 
 
+def _http_evaluations(record: MonitoringRecord, thresholds: FaultThresholds) -> list[FaultEvaluation]:
+    """Evaluate the HTTP probe independently of the ICMP result.
+
+    ``http_ok is None`` means no endpoint was configured for this record, so
+    there is nothing to judge and nothing to resolve.
+    """
+    if record.http_ok is None:
+        return []
+
+    if not record.http_ok:
+        # No status code means the request never completed.
+        severity = (
+            FaultEvent.Severity.CRITICAL
+            if record.http_status_code is None
+            else FaultEvent.Severity.HIGH
+        )
+        return [FaultEvaluation(
+            FaultEvent.FaultType.HTTP_ENDPOINT_FAILURE,
+            severity,
+            record.http_error or 'HTTP endpoint did not return an acceptable response.',
+        )]
+
+    response_time = record.http_response_time_ms
+    if response_time is None:
+        return []
+
+    if response_time >= thresholds.http_response_high_ms:
+        return [FaultEvaluation(
+            FaultEvent.FaultType.HTTP_SLOW_RESPONSE,
+            FaultEvent.Severity.HIGH,
+            f'HTTP response time is {response_time:.3f} ms, above {thresholds.http_response_high_ms:.3f} ms.',
+        )]
+    if response_time >= thresholds.http_response_medium_ms:
+        return [FaultEvaluation(
+            FaultEvent.FaultType.HTTP_SLOW_RESPONSE,
+            FaultEvent.Severity.MEDIUM,
+            f'HTTP response time is {response_time:.3f} ms, above {thresholds.http_response_medium_ms:.3f} ms.',
+        )]
+    return []
+
+
 def _record_evaluations(record: MonitoringRecord, thresholds: FaultThresholds) -> list[FaultEvaluation]:
-    evaluations: list[FaultEvaluation] = []
+    evaluations: list[FaultEvaluation] = _http_evaluations(record, thresholds)
 
     if record.reachable is False:
-        return [FaultEvaluation(
+        evaluations.append(FaultEvaluation(
             FaultEvent.FaultType.DEVICE_UNREACHABLE,
             FaultEvent.Severity.CRITICAL,
             'Device is unreachable by ICMP monitoring.',
-        )]
+        ))
+        return evaluations
 
     if record.latency_ms is not None:
         if record.latency_ms >= thresholds.latency_high_ms:
@@ -141,6 +185,8 @@ def evaluate_monitoring_record(
         FaultEvent.FaultType.DEVICE_UNREACHABLE,
         FaultEvent.FaultType.HIGH_LATENCY,
         FaultEvent.FaultType.HIGH_PACKET_LOSS,
+        FaultEvent.FaultType.HTTP_ENDPOINT_FAILURE,
+        FaultEvent.FaultType.HTTP_SLOW_RESPONSE,
     ):
         if fault_type not in detected_types:
             _resolve_fault(record.device, fault_type)

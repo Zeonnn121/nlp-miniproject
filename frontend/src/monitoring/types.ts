@@ -7,6 +7,11 @@ export interface MonitoringRecord {
   reachable: boolean | null
   latencyMs: number | null
   packetLossPercent: number | null
+  /** Null when no HTTP endpoint is configured for the device. */
+  httpOk: boolean | null
+  httpStatusCode: number | null
+  httpResponseTimeMs: number | null
+  httpError: string
 }
 
 export interface SnmpMetric {
@@ -22,6 +27,17 @@ export interface MonitoringConfiguration {
   snmpEnabled: boolean
   snmpVersion: string | null
   availableMetrics: string[]
+  httpMonitoringEnabled: boolean
+  httpUrl: string
+  httpTimeoutSeconds: number | null
+  httpExpectedStatus: number | null
+}
+
+export interface HttpMonitoringInput {
+  httpMonitoringEnabled: boolean
+  httpUrl: string
+  httpTimeoutSeconds: number
+  httpExpectedStatus: number | null
 }
 
 export interface DeviceMonitoringSnapshot {
@@ -47,4 +63,5 @@ export class MonitoringServiceError extends Error {
 export interface DeviceMonitoringService {
   getSnapshot: (deviceId: string) => Promise<DeviceMonitoringSnapshot>
   runCheck: (deviceId: string) => Promise<MonitoringRecord>
+  updateHttpConfiguration: (deviceId: string, input: HttpMonitoringInput) => Promise<MonitoringConfiguration>
 }

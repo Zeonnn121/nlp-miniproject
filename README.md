@@ -21,6 +21,7 @@ Implemented:
 - Immediate and periodic ICMP monitoring
 - Latency and packet-loss recording
 - SNMP v1/v2c metric collection where configured
+- HTTP endpoint monitoring (status code and response time) where configured
 - Deterministic fault detection and severity assignment
 - Fault lifecycle: active, acknowledged, resolved
 - In-application notifications
@@ -50,7 +51,7 @@ The project does **not** claim physical interoperability across every network ve
        │                    │                    │
     Devices             Monitoring             Faults
        │                    │                    │
-       │             ICMP / SNMP          Detection rules
+       │             ICMP / HTTP / SNMP    Detection rules
        │                    │                    │
        └────────────────────┼────────────────────┘
                             │
@@ -78,7 +79,7 @@ Detailed diagrams and model relationships are in:
 | Frontend | React, TypeScript, Vite, Tailwind CSS v4, Recharts |
 | API | Django REST Framework |
 | Backend | Python, Django |
-| Monitoring | ICMP/Ping, PySNMP |
+| Monitoring | ICMP/Ping, HTTP endpoint probes, PySNMP |
 | Background jobs | Celery, Celery Beat |
 | Broker/backend | Redis |
 | Database | SQLite |
@@ -185,6 +186,10 @@ Configuration includes:
 - SNMP port
 - SNMP timeout
 - selected metrics
+- HTTP endpoint monitoring enabled/disabled
+- HTTP endpoint URL (`http://` or `https://`, no embedded credentials)
+- HTTP request timeout
+- optional exact expected HTTP status (any 2xx/3xx when unset)
 
 The current device model accepts IPv4 addresses only.
 
@@ -197,6 +202,8 @@ The implemented deterministic rules cover:
 - high packet loss
 - high CPU usage from supported SNMP metrics
 - high memory usage from supported SNMP metrics
+- HTTP endpoint failure (connection failure, or an unexpected status code)
+- HTTP slow response
 
 The model also contains interface/connectivity fault types used by the domain model, but they are not represented as a claim of an independent automatic detection algorithm unless supported by the current monitoring path.
 

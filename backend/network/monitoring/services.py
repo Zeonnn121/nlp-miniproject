@@ -11,8 +11,8 @@ from dataclasses import dataclass
 
 from django.db import transaction
 from django.utils import timezone
-
 from ..faults.detection import evaluate_monitoring_record
+from ..httpcheck import HTTPCheckResult, InvalidHTTPConfiguration, check_http_endpoint
 from ..models import Device, MonitoringConfiguration, MonitoringRecord
 
 
@@ -125,30 +125,57 @@ def _get_configuration(device: Device) -> MonitoringConfiguration:
     return configuration
 
 
-@transaction.atomic
+def _probe_http_endpoint(
+    device: Device, configuration: MonitoringConfiguration
+) -> HTTPCheckResult | None:
+    """Probe the configured endpoint, or return None when none is configured.
+
+    A malformed configuration is a setup error and is surfaced as such; a
+    reachable-but-failing endpoint is a measurement, not an error.
+    """
+    if not configuration.http_monitoring_enabled:
+        return None
+    try:
+        return check_http_endpoint(
+            configuration.http_url,
+            timeout_seconds=configuration.http_timeout_seconds,
+            expected_status=configuration.http_expected_status,
+        )
+    except InvalidHTTPConfiguration as exc:
+        raise InvalidMonitoringConfiguration(str(exc)) from exc
+
+
 def monitor_device(device: Device) -> MonitoringRecord:
-    """Ping a device, persist the result, and evaluate threshold faults."""
+    """Probe a device over ICMP and HTTP, persist the result, and detect faults."""
     if not device.monitoring_enabled:
         raise InvalidMonitoringConfiguration("Monitoring is disabled for this device.")
 
-    _get_configuration(device)
+    configuration = _get_configuration(device)
 
-    result = ping_ipv4(str(device.ip_address))
+    # Network probes run before the transaction opens so a slow endpoint cannot
+    # hold database writes open for the whole request timeout.
+    icmp_result = ping_ipv4(str(device.ip_address))
+    http_result = _probe_http_endpoint(device, configuration)
 
-    record = MonitoringRecord.objects.create(
-        device=device,
-        timestamp=timezone.now(),
-        reachable=result.reachable,
-        latency_ms=result.latency_ms,
-        packet_loss_percent=result.packet_loss_percent,
-    )
+    with transaction.atomic():
+        record = MonitoringRecord.objects.create(
+            device=device,
+            timestamp=timezone.now(),
+            reachable=icmp_result.reachable,
+            latency_ms=icmp_result.latency_ms,
+            packet_loss_percent=icmp_result.packet_loss_percent,
+            http_ok=http_result.ok if http_result else None,
+            http_status_code=http_result.status_code if http_result else None,
+            http_response_time_ms=http_result.response_time_ms if http_result else None,
+            http_error=(http_result.error or "") if http_result else "",
+        )
 
-    new_status = Device.Status.ONLINE if result.reachable else Device.Status.OFFLINE
-    if device.status != new_status:
-        device.status = new_status
-        device.save(update_fields=["status", "updated_at"])
+        new_status = Device.Status.ONLINE if icmp_result.reachable else Device.Status.OFFLINE
+        if device.status != new_status:
+            device.status = new_status
+            device.save(update_fields=["status", "updated_at"])
 
-    evaluate_monitoring_record(record)
+        evaluate_monitoring_record(record)
     return record
 
 
@@ -162,6 +189,10 @@ def record_measurement(
     reachable: bool | None,
     latency_ms: float | None = None,
     packet_loss_percent: float | None = None,
+    http_ok: bool | None = None,
+    http_status_code: int | None = None,
+    http_response_time_ms: float | None = None,
+    http_error: str = "",
     timestamp=None,
 ) -> MonitoringRecord:
     record = MonitoringRecord.objects.create(
@@ -170,6 +201,10 @@ def record_measurement(
         reachable=reachable,
         latency_ms=latency_ms,
         packet_loss_percent=packet_loss_percent,
+        http_ok=http_ok,
+        http_status_code=http_status_code,
+        http_response_time_ms=http_response_time_ms,
+        http_error=http_error,
     )
     evaluate_monitoring_record(record)
     return record
