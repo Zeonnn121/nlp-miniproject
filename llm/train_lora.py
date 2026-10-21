@@ -308,8 +308,8 @@ def main() -> None:
 
         # Memory optimisations for T4
         gradient_checkpointing=True,  # trade compute for memory (recompute fwd pass)
-        fp16=False,                   # bfloat16 is safer on modern GPUs
-        bf16=torch.cuda.is_available() and torch.cuda.is_bf16_supported(),
+        fp16=true,                   # bfloat16 is safer on modern GPUs
+        bf16=false,
 
         # Evaluation
         eval_strategy="epoch",        # evaluate after each epoch
