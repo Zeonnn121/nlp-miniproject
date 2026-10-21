@@ -1,0 +1,16 @@
+# LLM fine-tuning dependencies — kept separate from the backend requirements.
+# Install with:  pip install -r llm/requirements-llm.txt
+#
+# Tested on Python 3.10+, CUDA 12.1 (T4 / A100).
+# bitsandbytes requires a CUDA-capable GPU; for CPU-only testing remove it
+# and set QUANTIZE=False in train_lora.py.
+
+torch>=2.2.0
+transformers>=4.40.0
+peft>=0.11.0
+trl>=0.9.0
+bitsandbytes>=0.43.0       # 4-bit / 8-bit quantisation on GPU
+accelerate>=0.29.0         # required by transformers Trainer
+datasets>=2.18.0           # HF dataset utilities used by SFTTrainer
+sentencepiece>=0.2.0       # tokeniser for Qwen2.5 and many other models
+matplotlib>=3.8.0          # loss curve plot
