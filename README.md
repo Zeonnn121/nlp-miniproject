@@ -229,22 +229,5 @@ python llm/train_lora.py
 
 ---
 
-## Citation & Academic Reference
-
-If using this implementation or dataset in academic coursework, cite as follows:
-
-```bibtex
-@inproceedings{chavan2026netwatch,
-  title     = {Intelligent Network Device Monitoring and Fault Detection System with Domain-Specific QLoRA LLM Triage},
-  author    = {Chavan, Jeet and Dsouza, Zeon and Dsouza, Dhruv and Duarte, Delisha},
-  booktitle = {Proceedings of the Computer Engineering Mini-Project Conference},
-  institution={Fr. Concei\c{c}\~ao Rodrigues College of Engineering},
-  year      = {2026},
-  address   = {Mumbai, India}
-}
-```
-
----
-
 ## License
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
