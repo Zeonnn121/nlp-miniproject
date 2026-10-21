@@ -20,7 +20,7 @@ An intelligent, full-stack AIOps platform that unifies real-time asynchronous ne
   * Zeon Dsouza (10598)
   * Dhruv Dsouza (10597)
   * Delisha Duarte (10599)
-* **Academic Paper Source:** [`paper.tex`](paper.tex) / [`miniproject report.tex`](miniproject%20report.tex) *(IEEE Conference Format, Double-Column)*
+* **Academic Report Source:** [`paper.tex`](paper.tex) / [`miniproject report.tex`](miniproject%20report.tex) *(Conference Double-Column Format)*
 
 ---
 
@@ -90,24 +90,24 @@ Actual Google Colab training results over 3 epochs on `Qwen2.5-1.5B-Instruct` us
 ## Key Features
 
 ### 1. Multi-Protocol Telemetry Probing
-* **ICMP Ping:** High-precision round-trip time ($T_{\text{rtt}}$) measurement and packet loss percentage ($L_{\%}$).
+* **ICMP Ping:** High-precision round-trip time (`T_rtt`) measurement and packet loss percentage (`Loss %`).
 * **SNMP v1/v2c Polling:** Live OID collection for system CPU utilization and RAM occupancy.
-* **HTTP Endpoint Probing:** Response status code verification ($2xx/3xx$) and timeout latency tracking ($T_{\text{resp}} < 5.0\text{s}$).
+* **HTTP Endpoint Probing:** Response status code verification (`2xx`/`3xx`) and timeout latency tracking (`T_resp < 5.0s`).
 
 ### 2. Deterministic Fault State Machine
-* **Lifecycle:** $\text{Active} \xrightarrow{\text{Admin Ack}} \text{Acknowledged} \xrightarrow{\text{Metric Recovery / Manual}} \text{Resolved}$
+* **Lifecycle:** `Active` &rarr; `Acknowledged` &rarr; `Resolved` (with automatic recovery)
 * **Threshold Rules:**
-  * **Latency:** Medium ($200 \le T_{\text{rtt}} < 500\text{ ms}$), High ($T_{\text{rtt}} \ge 500\text{ ms}$).
-  * **Packet Loss:** Medium ($20 \le L_{\%} < 50\%$), High ($L_{\%} \ge 50\%$).
-  * **Unreachable:** Triggered on $k_{\text{fail}} \ge 3$ consecutive ICMP echo timeouts.
-  * **Resources:** High ($\ge 80\%$), Critical ($\ge 90\%$).
+  * **Latency:** Medium (`200 ms <= T_rtt < 500 ms`), High (`T_rtt >= 500 ms`).
+  * **Packet Loss:** Medium (`20% <= Loss < 50%`), High (`Loss >= 50%`).
+  * **Unreachable:** Triggered on 3 or more (`k >= 3`) consecutive ICMP echo timeouts.
+  * **Resources:** High (`CPU/RAM >= 80%`), Critical (`CPU/RAM >= 90%`).
 * **Auto-Resolution:** Active faults automatically transition to `Resolved` once consecutive probes return within safe operating limits.
 
 ### 3. NLP Curriculum & Dataset Engineering
 * **Linguistic Preprocessing:**
   * **Regular Expressions (`re` module):** Strict IPv4 validation with `^(\d{1,3}\.){3}\d{1,3}$`, numerical duration/metric extraction with `re.search()`, multi-metric anomaly parsing with `re.findall()`, lookbehind sentence tokenization with `re.split(r"(?<=[.!?])\s+", text)`, and text sanitization with `re.sub()`.
   * **Tokenization:** Rule-based sentence and word tokenization contrasted against Byte-Pair Encoding (BPE) subword tokenization.
-  * **Stemming & Lemmatization:** Porter Stemmer and WordNet POS-aware lemmatization (*drops*, *dropped*, *dropping* $\to$ *drop*; *congested*, *congestion* $\to$ *congest*) to enforce lexical diversity and eliminate semantic cross-split duplicates in `validate_dataset.py`.
+  * **Stemming & Lemmatization:** Porter Stemmer and WordNet POS-aware lemmatization (*drops*, *dropped*, *dropping* &rarr; *drop*; *congested*, *congestion* &rarr; *congest*) to enforce lexical diversity and eliminate semantic cross-split duplicates in `validate_dataset.py`.
 * **Dataset Splits (830 Total Records):**
   * **Train Split:** 664 records (80%)
   * **Validation Split:** 85 records (10%)
@@ -141,7 +141,7 @@ nlp-miniproject/
 ├── figures/                        # Publication figures & high-res dashboard screenshots
 ├── docs/                           # Architecture specs, database models, thesis chapters
 ├── deploy/                         # Nginx and systemd deployment templates
-├── paper.tex                       # IEEE double-column conference report source
+├── paper.tex                       # Conference double-column report source
 ├── miniproject report.tex          # LaTeX project report source
 ├── start.md                        # Quick developer runbook
 └── README.md                       # Master documentation
@@ -221,11 +221,11 @@ python llm/train_lora.py
 
 | Metric | Zero-Shot Baseline | Fine-Tuned QLoRA Adapter | Relative Gain |
 | :--- | :---: | :---: | :---: |
-| **Structural Output Compliance** | 58.0% | **100.0%** | $+42.0\%$ |
-| **Out-of-Domain Compliance (OOD)** | 45.0% | **100.0%** | $+55.0\%$ |
-| **BLEU-4 Score (Overall)** | 0.09 | **0.38** | $\approx 4.2\times$ |
-| **ROUGE-L Score (Overall)** | 0.21 | **0.54** | $\approx 2.6\times$ |
-| **Final Cross-Entropy Loss** | 2.14 | **0.16** | $-88.3\%$ error reduction |
+| **Structural Output Compliance** | 58.0% | **100.0%** | +42.0% |
+| **Out-of-Domain Compliance (OOD)** | 45.0% | **100.0%** | +55.0% |
+| **BLEU-4 Score (Overall)** | 0.09 | **0.38** | ~4.2x |
+| **ROUGE-L Score (Overall)** | 0.21 | **0.54** | ~2.6x |
+| **Final Cross-Entropy Loss** | 2.14 | **0.16** | -88.3% error reduction |
 
 ---
 
