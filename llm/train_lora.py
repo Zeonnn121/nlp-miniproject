@@ -308,8 +308,8 @@ def main() -> None:
 
         # Memory optimisations for T4
         gradient_checkpointing=True,  # trade compute for memory (recompute fwd pass)
-        fp16=true,                   # bfloat16 is safer on modern GPUs
-        bf16=false,
+        fp16=True,                   # bfloat16 is safer on modern GPUs
+        bf16=False,
 
         # Evaluation
         eval_strategy="epoch",        # evaluate after each epoch
