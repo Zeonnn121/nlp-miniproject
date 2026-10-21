@@ -22,6 +22,15 @@ export interface FaultEvent {
   resolvedAt?: string | null
 }
 
+export type FaultExplanationSource = 'llm' | 'fallback'
+
+export interface FaultExplanation {
+  explanation: string
+  likely_causes: string[]
+  recommended_actions: string[]
+  source: FaultExplanationSource
+}
+
 export interface FaultFilters {
   severity: FaultSeverity | 'all'
   status: FaultStatus | 'all'
@@ -50,6 +59,7 @@ export interface FaultService {
   acknowledge: (faultId: string) => Promise<FaultEvent>
   updateStatus: (faultId: string, status: FaultStatus) => Promise<FaultEvent>
   resolve: (faultId: string) => Promise<FaultEvent>
+  explain: (faultId: string) => Promise<FaultExplanation>
 }
 
 export type FaultScenario = 'populated' | 'empty' | 'partial' | 'error' | 'loading'

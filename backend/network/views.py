@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 
 from .alerts.services import create_fault_notification, mark_notification_read
 from .faults.services import acknowledge_fault, resolve_fault
+from .llm_service import get_fault_explanation
 from .models import Device, FaultEvent, MonitoringRecord, Notification
 from .monitoring import InvalidMonitoringConfiguration, monitor_device
 from .serializers import (
@@ -182,6 +183,13 @@ class FaultViewSet(viewsets.ReadOnlyModelViewSet):
     def resolve(self, request, pk=None):
         fault = resolve_fault(self.get_object())
         return Response(self.get_serializer(fault).data)
+
+    @action(detail=True, methods=['post'])
+    def explain(self, request, pk=None):
+        """Return a structured fault explanation, cached on the fault."""
+        fault = self.get_object()
+        refresh = str(request.query_params.get('refresh', '')).lower() in {'1', 'true', 'yes'}
+        return Response(get_fault_explanation(fault, refresh=refresh))
 
     @action(detail=True, methods=['patch'], url_path='status')
     def update_status(self, request, pk=None):

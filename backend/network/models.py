@@ -128,6 +128,8 @@ class FaultEvent(models.Model):
     detected_at = models.DateTimeField()
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.ACTIVE)
     description = models.TextField(blank=True)
+    # Cached structured explanation produced by the optional fault explainer.
+    explanation_cache = models.JSONField(null=True, blank=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:

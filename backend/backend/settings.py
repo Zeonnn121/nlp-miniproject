@@ -145,3 +145,14 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 5.0,
     },
 }
+
+# Optional local LLM fault explainer. When disabled or unavailable, the API
+# returns deterministic template explanations instead of failing.
+LLM_ENABLED = env_bool('LLM_ENABLED', False)
+LLM_BASE_MODEL = os.getenv('LLM_BASE_MODEL', 'Qwen/Qwen2.5-1.5B-Instruct')
+LLM_ADAPTER_PATH = os.getenv(
+    'LLM_ADAPTER_PATH',
+    str(BASE_DIR.parent / 'llm' / 'outputs' / 'adapter'),
+)
+LLM_MAX_NEW_TOKENS = int(os.getenv('LLM_MAX_NEW_TOKENS', '512'))
+LLM_TIMEOUT_SECONDS = float(os.getenv('LLM_TIMEOUT_SECONDS', '30'))

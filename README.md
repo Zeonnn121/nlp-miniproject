@@ -214,6 +214,12 @@ active → acknowledged → resolved
 active → resolved
 ```
 
+## LLM Fault Explainer
+
+The optional fault explainer turns a detected fault into a structured `Explanation`, `Likely causes`, and `Recommended actions` using a locally fine-tuned Qwen2.5-1.5B LoRA adapter, with a deterministic fallback when the model is disabled or unavailable. It is exposed as `POST /api/faults/<id>/explain/` and surfaced as **Explain this fault** in the fault detail view.
+
+See [`docs/LLM_FINE_TUNING.md`](docs/LLM_FINE_TUNING.md) for dataset design, training configuration, evaluation, integration, limitations, and reproduction steps.
+
 ## API Documentation
 
 Start with [`docs/API.md`](docs/API.md) for device and monitoring endpoints.

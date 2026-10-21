@@ -1,5 +1,5 @@
 import { apiRequest, ApiError } from '../api/client'
-import { FaultServiceError, type FaultEvent, type FaultListResult, type FaultService, type FaultStatus } from './types'
+import { FaultServiceError, type FaultEvent, type FaultExplanation, type FaultListResult, type FaultService, type FaultStatus } from './types'
 
 interface ApiFault extends FaultEvent { device?: string }
 
@@ -23,6 +23,9 @@ const apiService: FaultService = {
   },
   async resolve(faultId) {
     try { return await apiRequest<FaultEvent>(`/faults/${faultId}/resolve/`, { method: 'POST' }) } catch (error) { return handleError(error) }
+  },
+  async explain(faultId) {
+    try { return await apiRequest<FaultExplanation>(`/faults/${faultId}/explain/`, { method: 'POST' }) } catch (error) { return handleError(error) }
   },
 }
 
