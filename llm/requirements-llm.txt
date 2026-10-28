@@ -14,3 +14,5 @@ accelerate>=0.29.0         # required by transformers Trainer
 datasets>=2.18.0           # HF dataset utilities used by SFTTrainer
 sentencepiece>=0.2.0       # tokeniser for Qwen2.5 and many other models
 matplotlib>=3.8.0          # loss curve plot
+nltk>=3.8.0                # Porter stemming + WordNet lemmatization in scripts/validate_dataset.py
+                           # corpora: python -m nltk.downloader wordnet omw-1.4

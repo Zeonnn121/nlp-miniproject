@@ -107,7 +107,7 @@ Actual Google Colab training results over 3 epochs on `Qwen2.5-1.5B-Instruct` us
 * **Linguistic Preprocessing:**
   * **Regular Expressions (`re` module):** Strict IPv4 validation with `^(\d{1,3}\.){3}\d{1,3}$`, numerical duration/metric extraction with `re.search()`, multi-metric anomaly parsing with `re.findall()`, lookbehind sentence tokenization with `re.split(r"(?<=[.!?])\s+", text)`, and text sanitization with `re.sub()`.
   * **Tokenization:** Rule-based sentence and word tokenization contrasted against Byte-Pair Encoding (BPE) subword tokenization.
-  * **Stemming & Lemmatization:** Porter Stemmer and WordNet POS-aware lemmatization (*drops*, *dropped*, *dropping* &rarr; *drop*; *congested*, *congestion* &rarr; *congest*) to enforce lexical diversity and eliminate semantic cross-split duplicates in `validate_dataset.py`.
+  * **Stemming & Lemmatization:** NLTK `PorterStemmer` and `WordNetLemmatizer` (verb-then-noun) in `validate_dataset.py` report top-N root/lemma frequencies and flag lemma-identical sentences that appear in more than one dataset split (*drops*, *dropped*, *dropping* &rarr; *drop*; *congested* &rarr; *congest*).
 * **Dataset Splits (830 Total Records):**
   * **Train Split:** 664 records (80%)
   * **Validation Split:** 85 records (10%)
@@ -341,8 +341,8 @@ The following table provides full traceability across the repository, linking ea
 | **Multi-Metric Telemetry Parsing** | Python `re.findall` | [`llm/scripts/generate_scenarios.py`](llm/scripts/generate_scenarios.py) | Parses multi-metric anomaly telemetry across compound failure events. |
 | **Sentence Boundary Segmentation** | Python `re.split` | [`llm/scripts/validate_dataset.py`](llm/scripts/validate_dataset.py) | Implements lookbehind sentence splitting on terminal punctuation. |
 | **Log Sanitization & Whitespace Cleanup** | Python `re.sub` | [`llm/scripts/build_dataset.py`](llm/scripts/build_dataset.py) | Normalizes spacing, removes escape characters, and formats seed prompts. |
-| **Stemming & Vocabulary Auditing** | NLTK `PorterStemmer` | [`llm/scripts/validate_dataset.py`](llm/scripts/validate_dataset.py) | Audits vocabulary diversity and checks top-N repeated root terms. |
-| **POS-Aware Lemmatization** | NLTK `WordNetLemmatizer` | [`llm/scripts/build_dataset.py`](llm/scripts/build_dataset.py) | Normalizes verbs to eliminate semantic cross-split duplicates. |
+| **Stemming & Vocabulary Auditing** | NLTK `PorterStemmer` | [`llm/scripts/validate_dataset.py`](llm/scripts/validate_dataset.py) | `stem_tokens()` reduces every content word to its Porter root and reports the top-15 most frequent roots. |
+| **Lemma-Based Cross-Split Deduplication** | NLTK `WordNetLemmatizer` | [`llm/scripts/validate_dataset.py`](llm/scripts/validate_dataset.py) | `check_cross_split_lemmas()` compares verb-then-noun lemma signatures to flag near-duplicate sentences shared between train, validation, and test. |
 | **Industrial NLP & NER Analysis** | spaCy (`en_core_web_sm`) | [`llm/evaluate.py`](llm/evaluate.py) | Evaluates diagnostic text structure, entity preservation, and coherence. |
 | **Domain-Specific Fine-Tuning** | Hugging Face TRL + PEFT | [`llm/train_lora.py`](llm/train_lora.py) | Fine-tunes `Qwen2.5-1.5B-Instruct` using 4-bit QLoRA for automated triage. |
 

@@ -7,6 +7,7 @@ import { DashboardPage } from './pages/DashboardPage'
 import { DevicesPage } from './pages/DevicesPage'
 import { FaultHistoryPage } from './pages/FaultHistoryPage'
 import { FaultsPage } from './pages/FaultsPage'
+import { LlmPage } from './pages/LlmPage'
 import { LoginPage } from './pages/LoginPage'
 import { MonitoringHistoryPage } from './pages/MonitoringHistoryPage'
 import { NotificationsPage } from './pages/NotificationsPage'
@@ -31,8 +32,10 @@ function AppContent() {
           ? <FaultHistoryPage />
           : path === '/notifications'
             ? <NotificationsPage />
-            : deviceDetailsMatch
-              ? <Suspense fallback={<div className="mx-auto max-w-7xl px-4 py-8"><LoadingState /></div>}>
+            : path === '/llm'
+              ? <LlmPage />
+              : deviceDetailsMatch
+                ? <Suspense fallback={<div className="mx-auto max-w-7xl px-4 py-8"><LoadingState /></div>}>
                   <DeviceDetailsPage deviceId={decodeURIComponent(deviceDetailsMatch[1])} />
                 </Suspense>
               : <DashboardPage />

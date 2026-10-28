@@ -5,6 +5,7 @@ export type NavigationKey =
   | 'monitoring'
   | 'fault-history'
   | 'notifications'
+  | 'llm'
   | 'settings'
 
 export interface NavigationItem {

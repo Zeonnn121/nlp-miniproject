@@ -12,12 +12,22 @@ Checks:
   * No 'minute(s)' pattern in output
   * 'sustained' only appears when duration >= SUSTAINED_MIN minutes
   * Top-N most repeated sentences (across all outputs)
+  * Porter-stem and WordNet-lemma frequency audits over all outputs
+  * Cross-split duplicate sentences detected after lemmatization
 """
 import json
 import re
 import sys
-from collections import Counter
+from collections import Counter, defaultdict
 from pathlib import Path
+
+try:  # NLTK is optional: the structural checks below run without it.
+    from nltk.corpus import wordnet
+    from nltk.stem import PorterStemmer, WordNetLemmatizer
+    from nltk.tokenize import RegexpTokenizer
+    NLTK_AVAILABLE = True
+except ImportError:
+    NLTK_AVAILABLE = False
 
 ROOT = Path(__file__).parent.parent
 REQUIRED_HEADERS = ["Explanation:", "Likely causes:", "Recommended actions:"]
@@ -37,6 +47,9 @@ T = {
 SUSTAINED_MIN = 20  # minutes; 'sustained' is only valid at/above this duration
 
 TOP_N_SENTENCES = 15  # report this many most-repeated sentences
+TOP_N_ROOTS = 15  # report this many most-frequent stems / lemmas
+LEMMA_DUPLICATE_MIN_TOKENS = 6  # ignore short sentences in cross-split lemma matching
+NLTK_HINT = "python -m nltk.downloader wordnet omw-1.4"
 
 SPLITS = {
     "dataset": ROOT / "data" / "dataset.jsonl",
@@ -246,9 +259,128 @@ def collect_repeated_sentences(all_records: list[dict], threshold: int = 10) -> 
     return [(s, n) for s, n in counter.most_common(TOP_N_SENTENCES) if n > threshold]
 
 
+# ---------------------------------------------------------------------------
+# Morphological normalization: Porter stemming + WordNet lemmatization
+# ---------------------------------------------------------------------------
+
+TOKEN_PATTERN = r"[A-Za-z][A-Za-z0-9]*(?:[-'][A-Za-z0-9]+)*"
+STOPWORDS = frozenset("""
+    a about above after again against all also an and any are as at be been before
+    being below between both but by can could did do does doing down during each few
+    for from further had has have having he her here hers him his how i if in into is
+    it its itself just me might more most must my no nor not now of off on once only or
+    other our out over own same she should so some such than that the their them then
+    there these they this those through to too under until up very was we were what
+    when where which while who whom why will with would you your
+""".split())
+
+_MORPH_TOOLS = None
+_MORPH_UNAVAILABLE = False
+
+
+def _morphology_tools():
+    """Build the NLTK tokenizer/stemmer/lemmatizer once, or return None."""
+    global _MORPH_TOOLS, _MORPH_UNAVAILABLE
+    if _MORPH_TOOLS is not None or _MORPH_UNAVAILABLE:
+        return _MORPH_TOOLS
+    if not NLTK_AVAILABLE:
+        print("  [SKIP] NLTK not installed -- run: pip install nltk")
+        _MORPH_UNAVAILABLE = True
+        return None
+    try:
+        wordnet.synsets("network")  # force-loads the WordNet corpus
+    except LookupError:
+        print(f"  [SKIP] NLTK WordNet corpus missing -- run: {NLTK_HINT}")
+        _MORPH_UNAVAILABLE = True
+        return None
+    _MORPH_TOOLS = (
+        RegexpTokenizer(TOKEN_PATTERN),
+        PorterStemmer(),
+        WordNetLemmatizer(),
+    )
+    return _MORPH_TOOLS
+
+
+def _content_tokens(text: str, tokenizer) -> list[str]:
+    """Lowercase word tokens with stopwords and bare numbers removed."""
+    return [tok.lower() for tok in tokenizer.tokenize(text) if tok.lower() not in STOPWORDS]
+
+
+def _lemma(token: str, lemmatizer) -> str:
+    """Verb-first, then noun -- triage text is dominated by actions and devices."""
+    return lemmatizer.lemmatize(lemmatizer.lemmatize(token, pos=wordnet.VERB), pos=wordnet.NOUN)
+
+
+def stem_tokens(text: str) -> list[str]:
+    """Porter stems of the content words: saturates / saturated / saturating -> satur."""
+    tools = _morphology_tools()
+    if tools is None:
+        return []
+    tokenizer, stemmer, _ = tools
+    return [stemmer.stem(tok) for tok in _content_tokens(text, tokenizer)]
+
+
+def lemma_tokens(text: str) -> list[str]:
+    """WordNet lemmas of the content words: drops / dropped / dropping -> drop."""
+    tools = _morphology_tools()
+    if tools is None:
+        return []
+    tokenizer, _, lemmatizer = tools
+    return [_lemma(tok, lemmatizer) for tok in _content_tokens(text, tokenizer)]
+
+
+def collect_root_frequencies(
+    records: list[dict], kind: str = "stem"
+) -> list[tuple[str, int, list[str]]]:
+    """Count stems (or lemmas) across all outputs, keeping sample surface forms."""
+    tools = _morphology_tools()
+    if tools is None:
+        return []
+    tokenizer, stemmer, lemmatizer = tools
+    counter: Counter = Counter()
+    forms: dict[str, set[str]] = defaultdict(set)
+    for r in records:
+        for tok in _content_tokens(r.get("output", ""), tokenizer):
+            root = stemmer.stem(tok) if kind == "stem" else _lemma(tok, lemmatizer)
+            counter[root] += 1
+            forms[root].add(tok)
+    return [(root, n, sorted(forms[root])[:3]) for root, n in counter.most_common(TOP_N_ROOTS)]
+
+
+def _lemma_signature(text: str) -> tuple[str, ...]:
+    """Ordered lemma sequence used to compare sentences semantically."""
+    return tuple(lemma_tokens(text))
+
+
+def check_cross_split_lemmas(records_by_split: dict[str, list[dict]]) -> int:
+    """Warn when a sentence is identical after lemmatization but used in two splits."""
+    if _morphology_tools() is None:
+        return 0
+    owners: dict[tuple[str, ...], set[str]] = defaultdict(set)
+    previews: dict[tuple[str, ...], str] = {}
+    for split_name, records in records_by_split.items():
+        for r in records:
+            for sent in _sentences_from_output(r.get("output", "")):
+                signature = _lemma_signature(sent)
+                if len(signature) < LEMMA_DUPLICATE_MIN_TOKENS:
+                    continue
+                owners[signature].add(split_name)
+                previews.setdefault(signature, sent)
+    leaks = {sig: splits for sig, splits in owners.items() if len(splits) > 1}
+    for signature, splits in list(leaks.items())[:TOP_N_SENTENCES]:
+        preview = previews[signature][:100] + ("..." if len(previews[signature]) > 100 else "")
+        print(f"  [WARN]  lemma-identical sentence in {'+'.join(sorted(splits))}: {preview}")
+    if not leaks:
+        print("  [OK]    no sentence is lemma-identical across splits")
+    elif len(leaks) > TOP_N_SENTENCES:
+        print(f"  ... {len(leaks) - TOP_N_SENTENCES} more lemma-identical sentence(s)")
+    return len(leaks)
+
+
 def main() -> None:
     total_errors = 0
     split_inputs: dict[str, set[str]] = {}
+    split_records: dict[str, list[dict]] = {}
     all_records_for_freq: list[dict] = []
 
     for split_name, path in SPLITS.items():
@@ -277,6 +409,8 @@ def main() -> None:
             print(f"    {ft:<50} {n:>4}")
 
         split_inputs[split_name] = {r.get("input", "") for r in records}
+        if split_name != "dataset":
+            split_records[split_name] = records
 
         if errors == 0 and dupes == 0:
             print("  [OK]")
@@ -312,6 +446,30 @@ def main() -> None:
         )
     else:
         print("  [OK] No sentence appears more than 10 times.")
+
+    # vocabulary roots (Porter stemming)
+    print("\n=== Vocabulary roots (Porter stemming) ===")
+    stem_counts = collect_root_frequencies(all_records_for_freq, kind="stem")
+    if stem_counts:
+        print(f"  {'Root':<24} {'Count':>6}  Surface forms")
+        for root, n, forms in stem_counts:
+            print(f"  {root:<24} {n:>6}  {', '.join(forms)}")
+    else:
+        print("  [SKIP] stemming audit unavailable")
+
+    # canonical lemmas (WordNet)
+    print("\n=== Canonical lemmas (WordNet lemmatization) ===")
+    lemma_counts = collect_root_frequencies(all_records_for_freq, kind="lemma")
+    if lemma_counts:
+        print(f"  {'Lemma':<24} {'Count':>6}  Surface forms")
+        for lemma, n, forms in lemma_counts:
+            print(f"  {lemma:<24} {n:>6}  {', '.join(forms)}")
+    else:
+        print("  [SKIP] lemmatization audit unavailable")
+
+    # semantic (lemma-level) duplication across splits
+    print("\n=== Cross-split lemma duplicates ===")
+    check_cross_split_lemmas(split_records)
 
     print(f"\n{'='*40}")
     if total_errors:

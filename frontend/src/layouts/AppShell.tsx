@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useAuth } from '../auth/useAuth'
-import { ActivityIcon, AlertTriangleIcon, BellIcon, ChevronRightIcon, HistoryIcon, LayoutDashboardIcon, MenuIcon, ServerIcon, SettingsIcon, ShieldIcon, XIcon } from '../components/icons'
+import { ActivityIcon, AlertTriangleIcon, BellIcon, ChevronRightIcon, CpuIcon, HistoryIcon, LayoutDashboardIcon, MenuIcon, ServerIcon, SettingsIcon, ShieldIcon, XIcon } from '../components/icons'
 import { getNotificationService } from '../notifications/service'
 import type { FaultNotification } from '../notifications/types'
 import type { NavigationItem } from '../types/navigation'
@@ -14,9 +14,10 @@ const navigation: NavigationItem[] = [
   { key: 'monitoring', label: 'Monitoring History', description: 'Historical measurements', available: true },
   { key: 'fault-history', label: 'Fault History', description: 'Historical fault events', available: true },
   { key: 'notifications', label: 'Notifications', description: 'Monitoring alerts', available: true },
+  { key: 'llm', label: 'LLM & NLP', description: 'Model card and NLP pipeline', available: true },
   { key: 'settings', label: 'Settings', description: 'System configuration', available: false },
 ]
-const icons = { dashboard: LayoutDashboardIcon, devices: ServerIcon, faults: AlertTriangleIcon, monitoring: HistoryIcon, 'fault-history': HistoryIcon, notifications: BellIcon, settings: SettingsIcon }
+const icons = { dashboard: LayoutDashboardIcon, devices: ServerIcon, faults: AlertTriangleIcon, monitoring: HistoryIcon, 'fault-history': HistoryIcon, notifications: BellIcon, llm: CpuIcon, settings: SettingsIcon }
 
 function NotificationIndicator() {
   const [notifications, setNotifications] = useState<FaultNotification[]>([])
@@ -55,7 +56,7 @@ export function AppShell({ children }: AppShellProps) {
   const username = session?.user.username ?? 'Administrator'
   const initials = username.slice(0, 2).toUpperCase()
   const currentPath = window.location.pathname
-  const routes: Record<string, string> = { dashboard: '/', devices: '/devices', faults: '/faults', monitoring: '/monitoring-history', 'fault-history': '/fault-history', notifications: '/notifications' }
+  const routes: Record<string, string> = { dashboard: '/', devices: '/devices', faults: '/faults', monitoring: '/monitoring-history', 'fault-history': '/fault-history', notifications: '/notifications', llm: '/llm' }
   return <div className="min-h-screen text-[#e2e8f0]" style={{ background: '#030407' }}>
     {mobileOpen && <button className="fixed inset-0 z-40 bg-black/60 lg:hidden" aria-label="Close navigation" onClick={() => setMobileOpen(false)} />}
     <aside className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-[#1e2a45] transition-transform lg:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`} style={{ background: '#030407' }}>
