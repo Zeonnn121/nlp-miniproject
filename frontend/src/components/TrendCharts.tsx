@@ -39,7 +39,7 @@ function TrendChart({ records, pick, name, unit, color, ariaLabel, emptyMessage,
   const points: TrendPoint[] = raw.filter((point): point is TrendPoint => point.value !== null)
 
   if (points.length === 0) {
-    return <div className="rounded-xl border border-dashed border-slate-200 p-6 text-sm text-slate-500">{emptyMessage}</div>
+    return <div className="rounded-xl border border-dashed border-[#1e2a45] p-6 text-sm text-[#8b9dc0]">{emptyMessage}</div>
   }
 
   return (
@@ -48,25 +48,25 @@ function TrendChart({ records, pick, name, unit, color, ariaLabel, emptyMessage,
         <AreaChart data={points} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={color} stopOpacity={0.28} />
+              <stop offset="5%" stopColor={color} stopOpacity={0.35} />
               <stop offset="95%" stopColor={color} stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#1e2a45" vertical={false} />
           <XAxis
             dataKey="time"
             type="number"
             domain={['dataMin', 'dataMax']}
             minTickGap={36}
             tickFormatter={(value: number) => tickFormat.format(new Date(value))}
-            tick={{ fontSize: 11, fill: '#64748b' }}
+            tick={{ fontSize: 11, fill: '#4a5a80' }}
             tickLine={false}
-            axisLine={{ stroke: '#e2e8f0' }}
+            axisLine={{ stroke: '#1e2a45' }}
           />
           <YAxis
             width={46}
             tickFormatter={(value: number) => String(value)}
-            tick={{ fontSize: 11, fill: '#64748b' }}
+            tick={{ fontSize: 11, fill: '#4a5a80' }}
             tickLine={false}
             axisLine={false}
           />
@@ -76,7 +76,7 @@ function TrendChart({ records, pick, name, unit, color, ariaLabel, emptyMessage,
               return Number.isNaN(parsed) ? String(label) : labelFormat.format(new Date(parsed))
             }}
             formatter={(value) => [`${value ?? '—'} ${unit}`, name]}
-            contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }}
+            contentStyle={{ borderRadius: 12, border: '1px solid #1e2a45', fontSize: 12, background: '#0a0d16', color: '#f0f4ff' }}
           />
           <Area
             type="monotone"
@@ -105,7 +105,7 @@ export function LatencyTrendChart({ records }: { records: MonitoringRecord[] }) 
       pick={(record) => record.latencyMs}
       name="Latency"
       unit="ms"
-      color="#0f172a"
+      color="#1558c9"
       ariaLabel="Latency over time"
       emptyMessage={noData('latency')}
     />
@@ -119,7 +119,7 @@ export function PacketLossTrendChart({ records }: { records: MonitoringRecord[] 
       pick={(record) => record.packetLossPercent}
       name="Packet loss"
       unit="%"
-      color="#e11d48"
+      color="#f87171"
       ariaLabel="Packet loss over time"
       emptyMessage={noData('packet loss')}
     />
@@ -133,7 +133,7 @@ export function HttpResponseTrendChart({ records }: { records: MonitoringRecord[
       pick={(record) => (record.httpOk === null ? null : record.httpResponseTimeMs)}
       name="Response time"
       unit="ms"
-      color="#059669"
+      color="#d4ff24"
       ariaLabel="HTTP response time over time"
       emptyMessage="No HTTP response time has been recorded. Configure an endpoint to start collecting it."
       height={200}

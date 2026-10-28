@@ -11,19 +11,21 @@ function goToDevices() { window.location.assign('/devices') }
 function formatTimestamp(value: string | null): string { if (!value) return 'Not available'; return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) }
 function formatMilliseconds(value: number | null | undefined): string { return value === null || value === undefined ? 'Not available' : `${Math.round(value * 100) / 100} ms` }
 
-function MetricCard({ label, value, detail }: { label: string; value: string; detail?: string }) { return <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><p className="text-sm text-slate-500">{label}</p><p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>{detail && <p className="mt-1 text-xs text-slate-500">{detail}</p>}</article> }
+function MetricCard({ label, value, detail }: { label: string; value: string; detail?: string }) {
+  return <article className="rounded-2xl border border-[#1e2a45] p-5 shadow-sm" style={{ background: '#0a0d16' }}><p className="text-sm text-[#8b9dc0]">{label}</p><p className="mt-2 text-2xl font-semibold tracking-tight text-[#f0f4ff]">{value}</p>{detail && <p className="mt-1 text-xs text-[#4a5a80]">{detail}</p>}</article>
+}
 
 function TrendPanel({ title, caption, children }: { title: string; caption: string; children: ReactNode }) {
-  return <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Trend</p><h2 className="mt-1 text-lg font-semibold">{title}</h2></div><HistoryIcon className="size-5 text-slate-500" /></div><div className="mt-5">{children}</div><p className="mt-3 text-xs text-slate-500">{caption}</p></section>
+  return <section className="rounded-2xl border border-[#1e2a45] p-5 shadow-sm" style={{ background: '#0a0d16' }}><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#4a5a80]">Trend</p><h2 className="mt-1 text-lg font-semibold text-[#f0f4ff]">{title}</h2></div><HistoryIcon className="size-5 text-[#4a5a80]" /></div><div className="mt-5">{children}</div><p className="mt-3 text-xs text-[#4a5a80]">{caption}</p></section>
 }
 
 function httpState(snapshot: DeviceMonitoringSnapshot): { label: string; tone: string; detail: string } {
   const configuration = snapshot.configuration
-  if (!configuration.httpMonitoringEnabled) return { label: 'Not configured', tone: 'text-slate-500', detail: 'No HTTP endpoint is being probed for this device.' }
+  if (!configuration.httpMonitoringEnabled) return { label: 'Not configured', tone: 'text-[#4a5a80]', detail: 'No HTTP endpoint is being probed for this device.' }
   const latest = snapshot.latest
-  if (!latest || latest.httpOk === null) return { label: 'Awaiting check', tone: 'text-slate-500', detail: configuration.httpUrl }
-  if (latest.httpOk) return { label: 'Healthy', tone: 'text-emerald-600', detail: `${configuration.httpUrl} responded with HTTP ${latest.httpStatusCode ?? '—'} in ${formatMilliseconds(latest.httpResponseTimeMs)}.` }
-  return { label: 'Failing', tone: 'text-rose-600', detail: latest.httpError || `${configuration.httpUrl} returned an unacceptable response.` }
+  if (!latest || latest.httpOk === null) return { label: 'Awaiting check', tone: 'text-[#4a5a80]', detail: configuration.httpUrl }
+  if (latest.httpOk) return { label: 'Healthy', tone: 'text-[#4ade80]', detail: `${configuration.httpUrl} responded with HTTP ${latest.httpStatusCode ?? '—'} in ${formatMilliseconds(latest.httpResponseTimeMs)}.` }
+  return { label: 'Failing', tone: 'text-[#f87171]', detail: latest.httpError || `${configuration.httpUrl} returned an unacceptable response.` }
 }
 
 function HttpEndpointPanel({ deviceId, configuration, onSaved }: { deviceId: string; configuration: MonitoringConfiguration; onSaved: (next: MonitoringConfiguration) => void }) {
@@ -34,6 +36,9 @@ function HttpEndpointPanel({ deviceId, configuration, onSaved }: { deviceId: str
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+
+  const inputClass = 'mt-1 w-full rounded-xl border border-[#1e2a45] px-3 py-2.5 text-sm text-[#f0f4ff] outline-none focus:border-[#1558c9] transition-colors disabled:opacity-50'
+  const inputStyle = { background: '#030407' }
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -59,41 +64,41 @@ function HttpEndpointPanel({ deviceId, configuration, onSaved }: { deviceId: str
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-[#1e2a45] p-5 shadow-sm" style={{ background: '#0a0d16' }}>
       <div className="flex items-start gap-3">
-        <GlobeIcon className="mt-0.5 size-5 text-slate-500" />
+        <GlobeIcon className="mt-0.5 size-5 text-[#1558c9]" />
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">HTTP endpoint</p>
-          <h2 className="mt-1 text-lg font-semibold">Endpoint monitoring</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#4a5a80]">HTTP endpoint</p>
+          <h2 className="mt-1 text-lg font-semibold text-[#f0f4ff]">Endpoint monitoring</h2>
         </div>
       </div>
-      <p className="mt-3 text-xs text-slate-500">HTTP probing runs alongside ICMP. ICMP shows whether the host answers; the endpoint check shows whether the service answers, and how quickly.</p>
+      <p className="mt-3 text-xs text-[#8b9dc0]">HTTP probing runs alongside ICMP. ICMP shows whether the host answers; the endpoint check shows whether the service answers, and how quickly.</p>
       <form className="mt-4 space-y-4" onSubmit={submit}>
-        <label className="flex items-start gap-3 rounded-xl border border-slate-100 p-3">
-          <input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} className="mt-1 size-4 accent-slate-900" />
+        <label className="flex items-start gap-3 rounded-xl border border-[#1e2a45] p-3" style={{ background: '#0f1424' }}>
+          <input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} className="mt-1 size-4 accent-[#1558c9]" />
           <span>
-            <span className="block text-sm font-medium">Probe this endpoint</span>
-            <span className="block text-xs text-slate-500">Record status code and response time on every monitoring check.</span>
+            <span className="block text-sm font-medium text-[#f0f4ff]">Probe this endpoint</span>
+            <span className="block text-xs text-[#8b9dc0]">Record status code and response time on every monitoring check.</span>
           </span>
         </label>
         <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Endpoint URL</span>
-          <input type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://example.com/health" disabled={!enabled} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm disabled:bg-slate-50 disabled:text-slate-400" />
+          <span className="text-xs font-semibold uppercase tracking-wide text-[#4a5a80]">Endpoint URL</span>
+          <input type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://example.com/health" disabled={!enabled} className={inputClass} style={inputStyle} />
         </label>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Timeout (seconds)</span>
-            <input type="number" step="0.1" min="0.1" max="30" value={timeout} onChange={(event) => setTimeoutSeconds(event.target.value)} disabled={!enabled} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm disabled:bg-slate-50 disabled:text-slate-400" />
+            <span className="text-xs font-semibold uppercase tracking-wide text-[#4a5a80]">Timeout (seconds)</span>
+            <input type="number" step="0.1" min="0.1" max="30" value={timeout} onChange={(event) => setTimeoutSeconds(event.target.value)} disabled={!enabled} className={inputClass} style={inputStyle} />
           </label>
           <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Expected status</span>
-            <input type="number" min="100" max="599" value={expectedStatus} onChange={(event) => setExpectedStatus(event.target.value)} placeholder="Any 2xx/3xx" disabled={!enabled} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm disabled:bg-slate-50 disabled:text-slate-400" />
-            <span className="mt-1 block text-xs text-slate-500">Leave blank to accept any 2xx or 3xx response.</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-[#4a5a80]">Expected status</span>
+            <input type="number" min="100" max="599" value={expectedStatus} onChange={(event) => setExpectedStatus(event.target.value)} placeholder="Any 2xx/3xx" disabled={!enabled} className={inputClass} style={inputStyle} />
+            <span className="mt-1 block text-xs text-[#4a5a80]">Leave blank to accept any 2xx or 3xx response.</span>
           </label>
         </div>
-        {error && <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">{error}</p>}
-        {message && <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{message}</p>}
-        <button type="submit" disabled={saving} className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60">{saving ? 'Saving…' : 'Save endpoint settings'}</button>
+        {error && <p className="rounded-xl border border-[#3a1a1a] px-3 py-2 text-sm text-[#f87171]" style={{ background: '#1a0a0a' }}>{error}</p>}
+        {message && <p className="rounded-xl border border-[#1a3a1a] px-3 py-2 text-sm text-[#4ade80]" style={{ background: '#0a1f0a' }}>{message}</p>}
+        <button type="submit" disabled={saving} className="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60" style={{ background: 'linear-gradient(135deg, #1558c9, #0d3fa0)' }}>{saving ? 'Saving…' : 'Save endpoint settings'}</button>
       </form>
     </section>
   )
@@ -114,41 +119,41 @@ function SnapshotContent({ snapshot, deviceId, onConfigurationSaved }: { snapsho
   </div>
   {hasHttpData && <div className="mt-6"><TrendPanel title="HTTP response time" caption="Time taken by the configured endpoint to respond. Failing checks are omitted from this series."><HttpResponseTrendChart records={snapshot.history} /></TrendPanel></div>}
   <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)]">
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">SNMP</p><h2 className="mt-1 text-lg font-semibold">Supported metrics</h2></div><ActivityIcon className="size-5 text-slate-500" /></div>
-      <div className="mt-5 space-y-3">{snapshot.snmpMetrics.length === 0 ? <p className="text-sm text-slate-500">No SNMP metrics are available for this device.</p> : snapshot.snmpMetrics.map((metric) => <div key={metric.name} className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 p-3"><div><p className="text-sm font-medium">{metric.name}</p><p className="text-xs text-slate-500">{metric.available ? 'Available' : 'Not available from current monitoring data'}</p></div><span className="text-sm font-semibold">{metric.value === null ? '—' : `${metric.value}${metric.unit ? ` ${metric.unit}` : ''}`}</span></div>)}</div>
+    <section className="rounded-2xl border border-[#1e2a45] p-5 shadow-sm" style={{ background: '#0a0d16' }}>
+      <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#4a5a80]">SNMP</p><h2 className="mt-1 text-lg font-semibold text-[#f0f4ff]">Supported metrics</h2></div><ActivityIcon className="size-5 text-[#4a5a80]" /></div>
+      <div className="mt-5 space-y-3">{snapshot.snmpMetrics.length === 0 ? <p className="text-sm text-[#8b9dc0]">No SNMP metrics are available for this device.</p> : snapshot.snmpMetrics.map((metric) => <div key={metric.name} className="flex items-center justify-between gap-4 rounded-xl border border-[#1e2a45] p-3" style={{ background: '#0f1424' }}><div><p className="text-sm font-medium text-[#f0f4ff]">{metric.name}</p><p className="text-xs text-[#4a5a80]">{metric.available ? 'Available' : 'Not available from current monitoring data'}</p></div><span className="text-sm font-semibold text-[#8b9dc0]">{metric.value === null ? '—' : `${metric.value}${metric.unit ? ` ${metric.unit}` : ''}`}</span></div>)}</div>
     </section>
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-start gap-3"><GlobeIcon className="mt-0.5 size-5 text-slate-500" /><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">HTTP endpoint</p><h2 className="mt-1 text-lg font-semibold">Endpoint status</h2></div></div>
+    <section className="rounded-2xl border border-[#1e2a45] p-5 shadow-sm" style={{ background: '#0a0d16' }}>
+      <div className="flex items-start gap-3"><GlobeIcon className="mt-0.5 size-5 text-[#1558c9]" /><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#4a5a80]">HTTP endpoint</p><h2 className="mt-1 text-lg font-semibold text-[#f0f4ff]">Endpoint status</h2></div></div>
       <dl className="mt-5 space-y-4">
-        <div><dt className="text-xs text-slate-500">State</dt><dd className={`mt-1 text-sm font-semibold ${http.tone}`}>{http.label}</dd></div>
-        <div><dt className="text-xs text-slate-500">Detail</dt><dd className="mt-1 break-words text-sm">{http.detail}</dd></div>
-        <div><dt className="text-xs text-slate-500">Last status code</dt><dd className="mt-1 text-sm font-medium">{latest?.httpStatusCode ?? 'Not available'}</dd></div>
-        <div><dt className="text-xs text-slate-500">Response time</dt><dd className="mt-1 text-sm font-medium">{formatMilliseconds(latest?.httpResponseTimeMs)}</dd></div>
+        <div><dt className="text-xs text-[#4a5a80]">State</dt><dd className={`mt-1 text-sm font-semibold ${http.tone}`}>{http.label}</dd></div>
+        <div><dt className="text-xs text-[#4a5a80]">Detail</dt><dd className="mt-1 break-words text-sm text-[#8b9dc0]">{http.detail}</dd></div>
+        <div><dt className="text-xs text-[#4a5a80]">Last status code</dt><dd className="mt-1 text-sm font-medium text-[#f0f4ff]">{latest?.httpStatusCode ?? 'Not available'}</dd></div>
+        <div><dt className="text-xs text-[#4a5a80]">Response time</dt><dd className="mt-1 text-sm font-medium text-[#f0f4ff]">{formatMilliseconds(latest?.httpResponseTimeMs)}</dd></div>
       </dl>
     </section>
   </div>
   <div className="mt-6 grid gap-6 lg:grid-cols-2">
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-start gap-3"><ShieldIcon className="mt-0.5 size-5 text-slate-500" /><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Latest result</p><h2 className="mt-1 text-lg font-semibold">Most recent measurement</h2></div></div>
+    <section className="rounded-2xl border border-[#1e2a45] p-5 shadow-sm" style={{ background: '#0a0d16' }}>
+      <div className="flex items-start gap-3"><ShieldIcon className="mt-0.5 size-5 text-[#1558c9]" /><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#4a5a80]">Latest result</p><h2 className="mt-1 text-lg font-semibold text-[#f0f4ff]">Most recent measurement</h2></div></div>
       <dl className="mt-5 grid gap-4 sm:grid-cols-2">
-        <div><dt className="text-xs text-slate-500">Timestamp</dt><dd className="mt-1 text-sm font-medium">{formatTimestamp(latest?.timestamp ?? null)}</dd></div>
-        <div><dt className="text-xs text-slate-500">Reachability</dt><dd className="mt-1 text-sm font-medium">{availability}</dd></div>
-        <div><dt className="text-xs text-slate-500">Latency</dt><dd className="mt-1 text-sm font-medium">{latency}</dd></div>
-        <div><dt className="text-xs text-slate-500">Packet loss</dt><dd className="mt-1 text-sm font-medium">{loss}</dd></div>
-        <div><dt className="text-xs text-slate-500">HTTP response</dt><dd className="mt-1 text-sm font-medium">{latest?.httpOk === null || latest?.httpOk === undefined ? 'Not probed' : latest.httpOk ? 'Succeeded' : 'Failed'}</dd></div>
-        <div><dt className="text-xs text-slate-500">HTTP error</dt><dd className="mt-1 break-words text-sm font-medium">{latest?.httpError || 'None'}</dd></div>
+        <div><dt className="text-xs text-[#4a5a80]">Timestamp</dt><dd className="mt-1 text-sm font-medium text-[#f0f4ff]">{formatTimestamp(latest?.timestamp ?? null)}</dd></div>
+        <div><dt className="text-xs text-[#4a5a80]">Reachability</dt><dd className="mt-1 text-sm font-medium text-[#f0f4ff]">{availability}</dd></div>
+        <div><dt className="text-xs text-[#4a5a80]">Latency</dt><dd className="mt-1 text-sm font-medium text-[#f0f4ff]">{latency}</dd></div>
+        <div><dt className="text-xs text-[#4a5a80]">Packet loss</dt><dd className="mt-1 text-sm font-medium text-[#f0f4ff]">{loss}</dd></div>
+        <div><dt className="text-xs text-[#4a5a80]">HTTP response</dt><dd className="mt-1 text-sm font-medium text-[#f0f4ff]">{latest?.httpOk === null || latest?.httpOk === undefined ? 'Not probed' : latest.httpOk ? 'Succeeded' : 'Failed'}</dd></div>
+        <div><dt className="text-xs text-[#4a5a80]">HTTP error</dt><dd className="mt-1 break-words text-sm font-medium text-[#f0f4ff]">{latest?.httpError || 'None'}</dd></div>
       </dl>
     </section>
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-start gap-3"><SettingsIcon className="mt-0.5 size-5 text-slate-500" /><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Configuration</p><h2 className="mt-1 text-lg font-semibold">Monitoring configuration</h2></div></div>
+    <section className="rounded-2xl border border-[#1e2a45] p-5 shadow-sm" style={{ background: '#0a0d16' }}>
+      <div className="flex items-start gap-3"><SettingsIcon className="mt-0.5 size-5 text-[#1558c9]" /><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#4a5a80]">Configuration</p><h2 className="mt-1 text-lg font-semibold text-[#f0f4ff]">Monitoring configuration</h2></div></div>
       <dl className="mt-5 grid gap-4 sm:grid-cols-2">
-        <div><dt className="text-xs text-slate-500">Monitoring</dt><dd className="mt-1 text-sm font-medium">{snapshot.configuration.enabled ? 'Enabled' : 'Disabled'}</dd></div>
-        <div><dt className="text-xs text-slate-500">Polling interval</dt><dd className="mt-1 text-sm font-medium">{snapshot.configuration.intervalSeconds === null ? 'Not configured' : `${snapshot.configuration.intervalSeconds} seconds`}</dd></div>
-        <div><dt className="text-xs text-slate-500">SNMP</dt><dd className="mt-1 text-sm font-medium">{snapshot.configuration.snmpEnabled ? snapshot.configuration.snmpVersion ?? 'Enabled' : 'Not enabled'}</dd></div>
-        <div><dt className="text-xs text-slate-500">Available SNMP metrics</dt><dd className="mt-1 text-sm font-medium">{snapshot.configuration.availableMetrics.length || 'None reported'}</dd></div>
-        <div><dt className="text-xs text-slate-500">HTTP endpoint</dt><dd className="mt-1 text-sm font-medium">{snapshot.configuration.httpMonitoringEnabled ? 'Enabled' : 'Not enabled'}</dd></div>
-        <div><dt className="text-xs text-slate-500">HTTP timeout</dt><dd className="mt-1 text-sm font-medium">{snapshot.configuration.httpTimeoutSeconds === null ? 'Not configured' : `${snapshot.configuration.httpTimeoutSeconds} seconds`}</dd></div>
+        <div><dt className="text-xs text-[#4a5a80]">Monitoring</dt><dd className="mt-1 text-sm font-medium text-[#f0f4ff]">{snapshot.configuration.enabled ? 'Enabled' : 'Disabled'}</dd></div>
+        <div><dt className="text-xs text-[#4a5a80]">Polling interval</dt><dd className="mt-1 text-sm font-medium text-[#f0f4ff]">{snapshot.configuration.intervalSeconds === null ? 'Not configured' : `${snapshot.configuration.intervalSeconds} seconds`}</dd></div>
+        <div><dt className="text-xs text-[#4a5a80]">SNMP</dt><dd className="mt-1 text-sm font-medium text-[#f0f4ff]">{snapshot.configuration.snmpEnabled ? snapshot.configuration.snmpVersion ?? 'Enabled' : 'Not enabled'}</dd></div>
+        <div><dt className="text-xs text-[#4a5a80]">Available SNMP metrics</dt><dd className="mt-1 text-sm font-medium text-[#f0f4ff]">{snapshot.configuration.availableMetrics.length || 'None reported'}</dd></div>
+        <div><dt className="text-xs text-[#4a5a80]">HTTP endpoint</dt><dd className="mt-1 text-sm font-medium text-[#f0f4ff]">{snapshot.configuration.httpMonitoringEnabled ? 'Enabled' : 'Not enabled'}</dd></div>
+        <div><dt className="text-xs text-[#4a5a80]">HTTP timeout</dt><dd className="mt-1 text-sm font-medium text-[#f0f4ff]">{snapshot.configuration.httpTimeoutSeconds === null ? 'Not configured' : `${snapshot.configuration.httpTimeoutSeconds} seconds`}</dd></div>
       </dl>
     </section>
   </div>
@@ -163,6 +168,6 @@ export function DeviceDetailsPage({ deviceId }: { deviceId: string }) {
   const configurationSaved = (next: MonitoringConfiguration) => { setSnapshot((current) => (current ? { ...current, configuration: next } : current)) }
   useEffect(() => { let active = true; getMonitoringService().getSnapshot(deviceId).then((result) => { if (active) setSnapshot(result) }).catch((reason: unknown) => { if (active) setError(reason instanceof MonitoringServiceError ? reason.message : 'Unable to load device monitoring data.') }).finally(() => { if (active) setLoading(false) }); return () => { active = false } }, [deviceId])
   if (loading) return <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"><LoadingState /></div>
-  if (error || !snapshot) return <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"><button type="button" onClick={goToDevices} className="mb-5 text-sm font-semibold text-slate-600 hover:text-slate-950">← Back to devices</button><ErrorState description={error || 'No monitoring data is available for this device.'} /></div>
-  return <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10"><div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between"><div><button type="button" onClick={goToDevices} className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-950"><ChevronRightIcon className="size-4 rotate-180" />Devices</button><div className="flex items-start gap-3"><ServerIcon className="mt-1 size-7 text-slate-700" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Device details</p><h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">{snapshot.device.name}</h1><p className="mt-1 font-mono text-sm text-slate-500">{snapshot.device.ipAddress}</p></div></div></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => void runCheck()} disabled={checking} className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"><ActivityIcon className="size-4" />{checking ? 'Checking device...' : 'Run monitoring check'}</button><button type="button" onClick={() => void load()} disabled={checking} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold shadow-sm disabled:cursor-not-allowed disabled:opacity-60"><RefreshIcon className="size-4" />Refresh data</button></div></div>{checkMessage && <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{checkMessage}</div>}{import.meta.env.VITE_MONITORING_ADAPTER === 'mock' && <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">Development monitoring adapter: displayed measurements are fixture data for UI testing, not live network measurements.</div>}<section className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4"><div><p className="text-xs text-slate-500">Device type</p><p className="mt-1 text-sm font-semibold capitalize">{snapshot.device.type.replace('-', ' ')}</p></div><div><p className="text-xs text-slate-500">Current status</p><div className="mt-1"><DeviceStatusBadge status={snapshot.device.status} /></div></div><div><p className="text-xs text-slate-500">Monitoring status</p><p className="mt-1 text-sm font-semibold">{snapshot.configuration.enabled ? 'Enabled' : 'Disabled'}</p></div><div><p className="text-xs text-slate-500">Last measurement</p><p className="mt-1 text-sm font-semibold">{formatTimestamp(snapshot.latest?.timestamp ?? null)}</p></div></div></section><SnapshotContent snapshot={snapshot} deviceId={deviceId} onConfigurationSaved={configurationSaved} /></div>
+  if (error || !snapshot) return <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"><button type="button" onClick={goToDevices} className="mb-5 text-sm font-semibold text-[#8b9dc0] hover:text-[#1558c9] transition-colors">← Back to devices</button><ErrorState description={error || 'No monitoring data is available for this device.'} /></div>
+  return <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10"><div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between"><div><button type="button" onClick={goToDevices} className="mb-3 inline-flex items-center gap-1 text-sm font-semibold text-[#8b9dc0] hover:text-[#1558c9] transition-colors"><ChevronRightIcon className="size-4 rotate-180" />Devices</button><div className="flex items-start gap-3"><ServerIcon className="mt-1 size-7 text-[#1558c9]" /><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#4a5a80]">Device details</p><h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#f0f4ff] sm:text-3xl">{snapshot.device.name}</h1><p className="mt-1 font-mono text-sm text-[#4a5a80]">{snapshot.device.ipAddress}</p></div></div></div><div className="flex flex-wrap gap-2"><button type="button" onClick={() => void runCheck()} disabled={checking} className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60" style={{ background: 'linear-gradient(135deg, #1558c9, #0d3fa0)' }}><ActivityIcon className="size-4" />{checking ? 'Checking device...' : 'Run monitoring check'}</button><button type="button" onClick={() => void load()} disabled={checking} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#1e2a45] px-4 py-2.5 text-sm font-semibold text-[#8b9dc0] shadow-sm disabled:cursor-not-allowed disabled:opacity-60 hover:bg-[#0f1424] hover:text-[#f0f4ff] transition-colors" style={{ background: '#0a0d16' }}><RefreshIcon className="size-4" />Refresh data</button></div></div>{checkMessage && <div className="mb-6 rounded-xl border border-[#1a3a1a] px-4 py-3 text-sm text-[#4ade80]" style={{ background: '#0a1f0a' }}>{checkMessage}</div>}{import.meta.env.VITE_MONITORING_ADAPTER === 'mock' && <div className="mb-6 rounded-xl border border-[#3a3a1a] px-4 py-3 text-sm text-[#facc15]" style={{ background: '#1a1a0a' }}>Development monitoring adapter: displayed measurements are fixture data for UI testing, not live network measurements.</div>}<section className="mb-6 rounded-2xl border border-[#1e2a45] p-5 shadow-sm" style={{ background: '#0a0d16' }}><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4"><div><p className="text-xs text-[#4a5a80]">Device type</p><p className="mt-1 text-sm font-semibold capitalize text-[#f0f4ff]">{snapshot.device.type.replace('-', ' ')}</p></div><div><p className="text-xs text-[#4a5a80]">Current status</p><div className="mt-1"><DeviceStatusBadge status={snapshot.device.status} /></div></div><div><p className="text-xs text-[#4a5a80]">Monitoring status</p><p className="mt-1 text-sm font-semibold text-[#f0f4ff]">{snapshot.configuration.enabled ? 'Enabled' : 'Disabled'}</p></div><div><p className="text-xs text-[#4a5a80]">Last measurement</p><p className="mt-1 text-sm font-semibold text-[#f0f4ff]">{formatTimestamp(snapshot.latest?.timestamp ?? null)}</p></div></div></section><SnapshotContent snapshot={snapshot} deviceId={deviceId} onConfigurationSaved={configurationSaved} /></div>
 }

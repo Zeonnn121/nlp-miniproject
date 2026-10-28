@@ -5,9 +5,9 @@ interface StatusBadgeProps {
 }
 
 const config: Record<DeviceStatus, { label: string; symbol: string; classes: string }> = {
-  online: { label: 'Online', symbol: '✓', classes: 'border-emerald-200 bg-emerald-50 text-emerald-700' },
-  offline: { label: 'Offline', symbol: '×', classes: 'border-rose-200 bg-rose-50 text-rose-700' },
-  unknown: { label: 'Unknown', symbol: '?', classes: 'border-slate-200 bg-slate-50 text-slate-600' },
+  online: { label: 'Online', symbol: '✓', classes: 'border-[#1a3a1a] bg-[#0a1f0a] text-[#4ade80]' },
+  offline: { label: 'Offline', symbol: '×', classes: 'border-[#3a1a1a] bg-[#1f0a0a] text-[#f87171]' },
+  unknown: { label: 'Unknown', symbol: '?', classes: 'border-[#1e2a45] bg-[#0a0d16] text-[#4a5a80]' },
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {

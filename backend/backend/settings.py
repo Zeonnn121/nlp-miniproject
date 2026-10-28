@@ -10,7 +10,7 @@ from django.core.management.utils import get_random_secret_key
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env()
-env.read_env(os.path.join(BASE_DIR, '.env'))
+env.read_env(os.path.join(BASE_DIR, '.env'), overwrite=True)
 
 
 def env_bool(name: str, default: bool) -> bool:

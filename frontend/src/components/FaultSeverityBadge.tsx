@@ -5,10 +5,10 @@ interface FaultSeverityBadgeProps {
 }
 
 const config: Record<FaultSeverity, { label: string; symbol: string; classes: string }> = {
-  critical: { label: 'Critical', symbol: '!', classes: 'border-rose-200 bg-rose-50 text-rose-700' },
-  high: { label: 'High', symbol: '↑', classes: 'border-orange-200 bg-orange-50 text-orange-700' },
-  medium: { label: 'Medium', symbol: '•', classes: 'border-amber-200 bg-amber-50 text-amber-700' },
-  low: { label: 'Low', symbol: '↓', classes: 'border-slate-200 bg-slate-50 text-slate-600' },
+  critical: { label: 'Critical', symbol: '!', classes: 'border-[#3a1a1a] bg-[#1f0a0a] text-[#f87171]' },
+  high: { label: 'High', symbol: '↑', classes: 'border-[#3a2a1a] bg-[#1f1a0a] text-[#fb923c]' },
+  medium: { label: 'Medium', symbol: '•', classes: 'border-[#3a3a1a] bg-[#1f1f0a] text-[#facc15]' },
+  low: { label: 'Low', symbol: '↓', classes: 'border-[#1e2a45] bg-[#0a0d16] text-[#4a5a80]' },
 }
 
 export function FaultSeverityBadge({ severity }: FaultSeverityBadgeProps) {

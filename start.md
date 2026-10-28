@@ -1,3 +1,99 @@
+??????????????? 
+Start order
+
+Terminal 1 — Redis
+
+Needed by Celery.
+
+// bash
+redis-server
+
+If Redis isn't installed natively on Windows, use Docker:
+
+// bash
+docker run --rm -p 6379:6379 redis:7-alpine
+
+Terminal 2 — Django backend
+
+// bash
+cd backend
+source env/Scripts/activate        # cmd: env\Scripts\activate
+python manage.py migrate           # first time only
+cp .env.example .env               # first time only, then set DJANGO_SECRET_KEY
+python manage.py createsuperuser   # first time only
+python manage.py runserver
+
+Serves the API at  http://127.0.0.1:8000/ .
+
+Terminal 3 — Celery worker
+
+Runs monitoring jobs.
+
+// bash
+cd backend
+source env/Scripts/activate
+celery -A backend worker -l info --pool=solo
+
+ --pool=solo  is the reliable choice on Windows.
+
+Terminal 4 — Celery Beat
+
+Schedules periodic monitoring checks.
+
+// bash
+cd backend
+source env/Scripts/activate
+celery -A backend beat -l info
+
+If it complains about the pidfile on Windows, add  --pidfile= .
+
+Terminal 5 — React frontend
+
+// bash
+cd frontend
+npm install        # first time only
+npm run dev
+
+Open  http://localhost:5173/ .
+
+Minimal setup
+
+If you only want to browse the UI and run manual monitoring from the device page, you can skip terminals 3 and 4. Automatic/periodic monitoring requires the worker and beat.
+
+Redis is still required by Celery; without it, background monitoring tasks fail.
+
+LLM explainer
+
+No extra terminal. Install its dependencies into the same backend virtualenv so Django can import them:
+
+// bash
+cd backend
+source env/Scripts/activate
+pip install -r ../llm/requirements-llm.txt
+
+Then in  backend/.env :
+
+// env
+LLM_ENABLED=True
+LLM_BASE_MODEL=Qwen/Qwen2.5-1.5B-Instruct
+LLM_ADAPTER_PATH=llm/outputs/adapter
+
+Restart Django. The first “Explain this fault” request downloads/loads the base model and adapter and may take a while; later requests use the cache. With  LLM_ENABLED=False  or without the LLM packages, the endpoint still works via the deterministic fallback.
+?????????????
+
+7
+
+
+
+
+
+
+
+
+
+
+
+
 Terminal 1 — Backend (from the project root,  NetWatch/ ):
 
 // bash
